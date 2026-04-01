@@ -25,6 +25,75 @@ const TRIG_FUNCTIONS = {
   tanh: Math.tanh,
 }
 
+// Number facts utilities
+const isPrime = (n: number): boolean => {
+  if (n < 2) return false
+  if (n === 2) return true
+  if (n % 2 === 0) return false
+  for (let i = 3; i * i <= n; i += 2) {
+    if (n % i === 0) return false
+  }
+  return true
+}
+
+const isPalindrome = (n: number): boolean => {
+  const str = Math.abs(Math.floor(n)).toString()
+  return str === str.split('').reverse().join('')
+}
+
+const isPerfectSquare = (n: number): boolean => {
+  if (n < 0) return false
+  const sqrt = Math.sqrt(n)
+  return sqrt === Math.floor(sqrt)
+}
+
+const isPerfectCube = (n: number): boolean => {
+  if (n === 0) return true
+  const cbrt = Math.cbrt(n)
+  return Math.abs(cbrt - Math.round(cbrt)) < 0.0001
+}
+
+const getFactors = (n: number): number[] => {
+  const num = Math.abs(Math.floor(n))
+  if (num === 0 || num === 1) return [num]
+  const factors: number[] = []
+  for (let i = 1; i <= Math.min(num, 1000); i++) {
+    if (num % i === 0) {
+      factors.push(i)
+    }
+  }
+  return factors
+}
+
+const getNumberFacts = (numStr: string) => {
+  const num = parseFloat(numStr)
+  
+  // Only show facts for positive integers
+  if (num < 0 || num !== Math.floor(num) || !isFinite(num)) {
+    return null
+  }
+
+  const facts: string[] = []
+
+  if (num === 0 || num === 1) {
+    facts.push(num === 1 ? 'Unity' : 'Zero')
+  } else {
+    if (isPrime(num)) facts.push('Prime')
+    if (isPalindrome(num)) facts.push('Palindrome')
+    if (isPerfectSquare(num)) facts.push(`Perfect Square (${Math.sqrt(num)}²)`)
+    if (isPerfectCube(num)) facts.push(`Perfect Cube (${Math.round(Math.cbrt(num))}³)`)
+  }
+
+  const factors = getFactors(num)
+  if (factors.length <= 10) {
+    facts.push(`Factors: ${factors.join(', ')}`)
+  } else {
+    facts.push(`Factors: ${factors.slice(0, 5).join(', ')}... (${factors.length} total)`)
+  }
+
+  return facts.length > 0 ? facts : null
+}
+
 export function Calculator() {
   const [displayValue, setDisplayValue] = useState('0')
   const [previousValue, setPreviousValue] = useState<string | null>(null)
@@ -32,8 +101,14 @@ export function Calculator() {
   const [isNewNumber, setIsNewNumber] = useState(true)
   const [isDegrees, setIsDegrees] = useState(true)
   const [history, setHistory] = useState<string[]>([])
+  const [numberFacts, setNumberFacts] = useState<string[] | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Update number facts whenever display value changes
+  useEffect(() => {
+    setNumberFacts(getNumberFacts(displayValue))
+  }, [displayValue])
 
   // Handle keyboard input
   useEffect(() => {
@@ -537,6 +612,20 @@ export function Calculator() {
             .
           </Button>
         </div>
+
+        {/* Number Facts */}
+        {numberFacts && (
+          <div className="mt-4 bg-gradient-to-b from-purple-900/30 to-purple-950/30 rounded-lg p-3 border border-purple-700/50">
+            <p className="text-purple-300 text-xs font-bold mb-2">Fun Facts</p>
+            <div className="space-y-1">
+              {numberFacts.map((fact, idx) => (
+                <p key={idx} className="text-purple-200 text-xs">
+                  • {fact}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* History */}
         {history.length > 0 && (
