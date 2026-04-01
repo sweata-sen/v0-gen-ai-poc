@@ -65,7 +65,13 @@ const getFactors = (n: number): number[] => {
   return factors
 }
 
-const getNumberFacts = (numStr: string) => {
+interface NumberFact {
+  facts: string[]
+  isSpecial: boolean
+  divisors?: number[]
+}
+
+const getNumberFacts = (numStr: string): NumberFact | null => {
   const num = parseFloat(numStr)
   
   // Only show facts for positive integers
@@ -74,24 +80,30 @@ const getNumberFacts = (numStr: string) => {
   }
 
   const facts: string[] = []
+  let isSpecial = false
 
   if (num === 0 || num === 1) {
     facts.push(num === 1 ? 'Unity' : 'Zero')
   } else {
     if (isPrime(num)) facts.push('Prime')
     if (isPalindrome(num)) facts.push('Palindrome')
-    if (isPerfectSquare(num)) facts.push(`Perfect Square (${Math.sqrt(num)}²)`)
-    if (isPerfectCube(num)) facts.push(`Perfect Cube (${Math.round(Math.cbrt(num))}³)`)
+    if (isPerfectSquare(num)) {
+      facts.push(`Perfect Square (${Math.sqrt(num)}²)`)
+      isSpecial = true
+    }
+    if (isPerfectCube(num)) {
+      facts.push(`Perfect Cube (${Math.round(Math.cbrt(num))}³)`)
+      isSpecial = true
+    }
   }
 
-  const factors = getFactors(num)
-  if (factors.length <= 10) {
-    facts.push(`Factors: ${factors.join(', ')}`)
-  } else {
-    facts.push(`Factors: ${factors.slice(0, 5).join(', ')}... (${factors.length} total)`)
-  }
+  const divisors = getFactors(num)
 
-  return facts.length > 0 ? facts : null
+  return {
+    facts,
+    isSpecial,
+    divisors
+  }
 }
 
 export function Calculator() {
@@ -101,7 +113,7 @@ export function Calculator() {
   const [isNewNumber, setIsNewNumber] = useState(true)
   const [isDegrees, setIsDegrees] = useState(true)
   const [history, setHistory] = useState<string[]>([])
-  const [numberFacts, setNumberFacts] = useState<string[] | null>(null)
+  const [numberFacts, setNumberFacts] = useState<NumberFact | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -387,13 +399,17 @@ export function Calculator() {
         </div>
 
         {/* Display */}
-        <div className="bg-gradient-to-b from-slate-950 to-slate-900 rounded-xl p-4 mb-6 border border-slate-700">
+        <div className={`bg-gradient-to-b from-slate-950 to-slate-900 rounded-xl p-4 mb-6 border border-slate-700 ${
+          numberFacts?.isSpecial ? 'animate-pulse-glow' : ''
+        }`}>
           <input
             ref={inputRef}
             type="text"
             value={displayValue}
             readOnly
-            className="w-full bg-transparent text-right text-4xl font-bold text-cyan-400 outline-none overflow-hidden"
+            className={`w-full bg-transparent text-right text-4xl font-bold text-cyan-400 outline-none overflow-hidden ${
+              numberFacts?.isSpecial ? 'animate-magic-pop' : ''
+            }`}
           />
         </div>
 
@@ -615,14 +631,44 @@ export function Calculator() {
 
         {/* Number Facts */}
         {numberFacts && (
-          <div className="mt-4 bg-gradient-to-b from-purple-900/30 to-purple-950/30 rounded-lg p-3 border border-purple-700/50">
-            <p className="text-purple-300 text-xs font-bold mb-2">Fun Facts</p>
-            <div className="space-y-1">
-              {numberFacts.map((fact, idx) => (
-                <p key={idx} className="text-purple-200 text-xs">
-                  • {fact}
-                </p>
-              ))}
+          <div className={`mt-4 rounded-lg p-3 border transition-all ${
+            numberFacts.isSpecial 
+              ? 'bg-gradient-to-b from-green-900/40 to-green-950/40 border-green-600/70 animate-shimmer' 
+              : 'bg-gradient-to-b from-purple-900/30 to-purple-950/30 border-purple-700/50'
+          }`}>
+            <p className={`text-xs font-bold mb-2 ${
+              numberFacts.isSpecial ? 'text-green-300' : 'text-purple-300'
+            }`}>
+              {numberFacts.isSpecial ? '✨ Fun Facts' : 'Fun Facts'}
+            </p>
+            <div className="space-y-2">
+              {numberFacts && numberFacts.facts && numberFacts.facts.length > 0 && (
+                <>
+                  {numberFacts.facts.map((fact, idx) => (
+                    <p key={idx} className={`text-xs ${
+                      numberFacts.isSpecial ? 'text-green-200' : 'text-purple-200'
+                    }`}>
+                      • {fact}
+                    </p>
+                  ))}
+                </>
+              )}
+              {numberFacts && numberFacts.divisors && (
+                <div className={`mt-2 pt-2 border-t ${
+                  numberFacts.isSpecial ? 'border-green-700/50' : 'border-purple-700/50'
+                }`}>
+                  <p className={`text-xs font-semibold mb-1 ${
+                    numberFacts.isSpecial ? 'text-green-200' : 'text-purple-200'
+                  }`}>
+                    All Divisors ({numberFacts.divisors.length}):
+                  </p>
+                  <p className={`text-xs ${
+                    numberFacts.isSpecial ? 'text-green-100' : 'text-purple-100'
+                  } font-mono break-words`}>
+                    {numberFacts.divisors.join(', ')}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
