@@ -33,6 +33,62 @@ export function Calculator() {
   const [isDegrees, setIsDegrees] = useState(true)
   const [history, setHistory] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Handle keyboard input
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      const key = event.key
+      const code = event.code
+
+      // Number keys and decimal point
+      if (/^[0-9]$/.test(key)) {
+        event.preventDefault()
+        handleNumberClick(key)
+      } else if (key === '.') {
+        event.preventDefault()
+        handleNumberClick('.')
+      }
+      // Operations
+      else if (key === '+') {
+        event.preventDefault()
+        handleOperation('+')
+      } else if (key === '-' && !event.shiftKey) {
+        event.preventDefault()
+        handleOperation('-')
+      } else if (key === '*' || key === 'x' || key === 'X') {
+        event.preventDefault()
+        handleOperation('*')
+      } else if (key === '/') {
+        event.preventDefault()
+        handleOperation('/')
+      } else if (key === '%') {
+        event.preventDefault()
+        handleOperation('%')
+      } else if (key === '^') {
+        event.preventDefault()
+        handleOperation('^')
+      }
+      // Enter or = for equals
+      else if (key === 'Enter' || key === '=') {
+        event.preventDefault()
+        handleEquals()
+      }
+      // Backspace for delete
+      else if (key === 'Backspace') {
+        event.preventDefault()
+        handleBackspace()
+      }
+      // Escape for clear
+      else if (key === 'Escape') {
+        event.preventDefault()
+        handleClear()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [displayValue, previousValue, operation, isNewNumber])
 
   // Format number to avoid floating point errors
   const formatNumber = (num: number): string => {
@@ -226,7 +282,7 @@ export function Calculator() {
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md" ref={containerRef}>
       <div className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-6 border border-slate-700">
         {/* Header */}
         <div className="mb-6">
